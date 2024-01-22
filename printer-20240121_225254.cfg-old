@@ -1,7 +1,3 @@
-[include mmu/base/*.cfg]
-[include mmu/optional/client_macros.cfg]
-[include mmu/optional/mmu_ercf_compat.cfg]
-[include mmu/optional/mmu_menu.cfg]
 
 # This file contains common pin mappings for the BigTreeTech Octopus V1.
 # To use this config, the firmware should be compiled for the STM32F446 with a "32KiB bootloader"
@@ -433,6 +429,10 @@ recover_velocity: 300.0
 # 	Includes
 #####################################################################
 [include mainsail.cfg]
+[include mmu/base/*.cfg]
+[include mmu/optional/client_macros.cfg]
+[include mmu/optional/mmu_ercf_compat.cfg]
+#[include mmu/optional/mmu_menu.cfg]
 [include macros.cfg]
 [include accelerometer.cfg]
 [include klicky-probe.cfg]
