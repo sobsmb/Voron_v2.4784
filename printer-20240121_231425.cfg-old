@@ -1,5 +1,3 @@
-[include mmu/base/*.cfg]
-[include mmu/optional/client_macros.cfg]
 # This file contains common pin mappings for the BigTreeTech Octopus V1.
 # To use this config, the firmware should be compiled for the STM32F446 with a "32KiB bootloader"
 # Enable "extra low-level configuration options" and select the "12MHz crystal" as clock reference
@@ -440,6 +438,8 @@ recover_velocity: 300.0
 [include nevermore.cfg]
 [include timelapse.cfg]
 [include KAMP_Settings.cfg]
+[include mmu/base/*.cfg]
+[include mmu/optional/client_macros.cfg]
 
 #*# <---------------------- SAVE_CONFIG ---------------------->
 #*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.
