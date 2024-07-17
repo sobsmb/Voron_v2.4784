@@ -47,6 +47,10 @@ path = ~/mainsail-config
 origin = https://github.com/mainsail-crew/mainsail-config.git
 managed_services = klipper
 
+[timelapse]
+output_path = ~/timelapse/
+ffmpeg_binary_path = /usr/bin/ffmpeg
+
 [update_manager crowsnest]
 type = git_repo
 path = ~/crowsnest
@@ -61,12 +65,6 @@ origin = https://github.com/mainsail-crew/sonar.git
 primary_branch = main
 managed_services = sonar
 install_script = tools/install.sh
-
-[update_manager z_calibration]
-type = git_repo
-path = /home/pi/klipper_z_calibration
-origin = https://github.com/protoloft/klipper_z_calibration.git
-managed_services = klipper
 
 [update_manager timelapse]
 type = git_repo
@@ -88,28 +86,30 @@ url = pover://{secrets.pushover_creds.user}@{secrets.pushover_creds.token}?prior
 events = error
 title = Voron 2.4784: EMERG - {event_args[1].filename}
 body = {event_name}: {event_args[1].message}
-attach = http://localhost/webcam/?action=snapshot
 
 [notifier pushover_pause]
 url = pover://{secrets.pushover_creds.user}@{secrets.pushover_creds.token}?priority=high
 events = pause
 title = Voron 2.4784: HIGH - {event_name}d
 body = {event_name}d: {event_args[1].filename}
-attach = http://localhost/webcam/?action=snapshot
 
 [notifier pushover_complete]
 url = pover://{secrets.pushover_creds.user}@{secrets.pushover_creds.token}
 events = complete
 title = Voron 2.4784: Print completed
 body = Completed: {event_args[1].filename}
-attach = http://localhost/webcam/?action=snapshot
 
 [notifier gcode_pushover]
 url = pover://{secrets.pushover_creds.user}@{secrets.pushover_creds.token}
 events = gcode
 title = Voron 2.4784: {event_message}
 body = Voron 2.4784: {event_message}
-attach = http://localhost/webcam/?action=snapshot
+
+[update_manager led_effect]
+type = git_repo
+path = ~/klipper-led_effect
+origin = https://github.com/julianschill/klipper-led_effect.git
+is_system_service = False
 
 [update_manager happy-hare]
 type = git_repo
@@ -118,4 +118,17 @@ origin = https://github.com/moggieuk/Happy-Hare.git
 primary_branch = main
 install_script = install.sh
 managed_services = klipper
+
+[update_manager KlipperScreen]
+type = git_repo
+path = ~/KlipperScreen
+origin = https://github.com/moggieuk/KlipperScreen-Happy-Hare-Edition.git
+env = ~/.KlipperScreen-env/bin/python
+requirements = scripts/KlipperScreen-requirements.txt
+install_script = scripts/KlipperScreen-install.sh
+managed_services = KlipperScreen
+
+[mmu_server]
+enable_file_preprocessor = True
+enable_toolchange_next_pos = True
 
