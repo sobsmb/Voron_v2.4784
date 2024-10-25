@@ -21,6 +21,7 @@ trusted_clients =
 	192.168.0.0/16
 	FE80::/10
 	::1/128
+	127.0.0.1
 
 [octoprint_compat]
 
@@ -61,4 +62,62 @@ origin = https://github.com/mainsail-crew/sonar.git
 primary_branch = main
 managed_services = sonar
 install_script = tools/install.sh
+
+[update_manager KlipperScreen]
+type = git_repo
+path = ~/KlipperScreen
+origin = https://github.com/moggieuk/KlipperScreen-Happy-Hare-Edition.git
+virtualenv = ~/.KlipperScreen-env
+requirements = scripts/KlipperScreen-requirements.txt
+system_dependencies = scripts/system-dependencies.json
+managed_services = KlipperScreen
+
+[update_manager Katapult]
+type = git_repo
+path = ~/katapult
+origin = https://github.com/Arksine/katapult.git
+is_system_service = False
+
+[notifier pushover_error]
+url = pover://{secrets.pushover_creds.user}@{secrets.pushover_creds.token}?priority=high
+events = error
+title = Voron 2.4784: EMERG - {event_args[1].filename}
+body = {event_name}: {event_args[1].message}
+
+[notifier pushover_pause]
+url = pover://{secrets.pushover_creds.user}@{secrets.pushover_creds.token}?priority=high
+events = pause
+title = Voron 2.4784: HIGH - {event_name}d
+body = {event_name}d: {event_args[1].filename}
+
+[notifier pushover_complete]
+url = pover://{secrets.pushover_creds.user}@{secrets.pushover_creds.token}
+events = complete
+title = Voron 2.4784: Print completed
+body = Completed: {event_args[1].filename}
+
+[notifier gcode_pushover]
+url = pover://{secrets.pushover_creds.user}@{secrets.pushover_creds.token}
+events = gcode
+title = Voron 2.4784: {event_message}
+body = Voron 2.4784: {event_message}
+
+[update_manager led_effect]
+type = git_repo
+path = ~/klipper-led_effect
+origin = https://github.com/julianschill/klipper-led_effect.git
+is_system_service = False
+
+[update_manager happy-hare]
+type = git_repo
+path = ~/Happy-Hare
+origin = https://github.com/moggieuk/Happy-Hare.git
+primary_branch = main
+install_script = install.sh
+managed_services = klipper
+
+[mmu_server]
+enable_file_preprocessor = True
+enable_toolchange_next_pos = True
+update_spoolman_location = True
 
