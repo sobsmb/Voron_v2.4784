@@ -1,42 +1,71 @@
 
-# Voron V2.4 – Blue Printer Configuration
+# Voron V2.4 Configuration (4784)
 
-This repository contains the full Klipper configuration for my **Voron V2.4** printer (nicknamed **Blue**).
+Configuration repository for my **Voron V2.4** running **Klipper**, with **Happy Hare ERCF MMU**.
 
-This configuration includes several custom macro systems designed to make multi-print workflows much faster while still maintaining safety.
+This repository stores the printer configuration, macros, and supporting service configuration used on the machine.
 
-## Key Features
+---
+
+# Printer Details
+
+| Component | Description |
+|-----------|-------------|
+| Printer | Voron V2.4 |
+| Firmware | Klipper |
+| MMU | ERCF with Happy Hare |
+| Host | Raspberry Pi running MainsailOS |
+| UI | Mainsail / KlipperScreen |
+| Probe | Voron TAP |
+| Chamber Filtration | Nevermore |
+| Airflow | Intake / Exhaust / Cooling fans |
+
+---
+
+# Repository Layout
+
+```
+printer.cfg                Main Klipper entrypoint
+
+hardware/                  Printer hardware configuration
+features/                  Optional features (bed mesh, sensors, etc)
+tuning/                    Tuning files (input shaper, accelerometer)
+macros/                    Organized macros
+
+services/                  Host-side service configuration
+archive/                   Old / unused configs kept for reference
+artifacts/                 Runtime generated files (ignored by git)
+
+mmu/                       Happy Hare ERCF configuration (not modified)
+```
+
+### Important Notes
+
+* The **`mmu/` directory is left untouched** so that Happy Hare updates can be applied safely.
+* Runtime files such as logs and Moonraker databases are excluded via `.gitignore`.
+* The repository is automatically backed up to GitHub using the `BACKUP_CFG` macro.
+
+---
+
+# Hot Standby & Fast Restart System
+
+This printer includes a **Hot Standby system** designed to drastically reduce the startup time between prints while maintaining safety.
+
+Key features include:
 
 - Hot Standby Mode
 - Fast Restart (skip homing and QGL)
 - TAP sanity probe validation
 - Automatic standby timeout shutdown
 - Chamber air purge safety cycle
-- MMU-friendly print ending
-- Material-aware fan behavior
+- MMU‑friendly print ending
+- Material‑aware fan behavior
 
 ---
 
-# Printer Hardware
+# Hot Standby Mode
 
-| Component | Details |
-|---|---|
-| Printer | Voron V2.4 |
-| Probe | Voron TAP |
-| Toolhead | TAP compatible |
-| MMU | ERCF |
-| Chamber | Fully enclosed |
-| Filtration | Nevermore |
-| Airflow | Intake / Exhaust / Cooling fans |
-| Firmware | Klipper |
-
----
-
-# Major Macro Systems
-
-## Hot Standby Mode
-
-Hot standby allows the printer to remain in a **ready-to-print state** after a print finishes.
+Hot standby allows the printer to remain in a **ready‑to‑print state** after a print finishes.
 
 This is intended for workflows where multiple prints are started in sequence using the same material.
 
@@ -47,13 +76,13 @@ HEAT_HOLD_ON
 HEAT_HOLD_OFF
 ```
 
-When enabled, the printer will enter standby at the end of a print.
+When enabled, the printer enters standby automatically at the end of a print.
 
 ---
 
 # Hot Standby Behavior
 
-When **heat hold is enabled** and a print finishes, the printer will:
+When **heat hold is enabled** and a print finishes the printer will:
 
 - Turn **off the hotend**
 - Keep the **bed temperature unchanged**
@@ -65,23 +94,23 @@ When **heat hold is enabled** and a print finishes, the printer will:
 - Mark standby as **ready**
 - Start a **60 minute standby timer**
 
-This preserves the printer in a stable state for the next print.
+This preserves the printer in a stable state so the next print can start quickly.
 
 ---
 
 # Fast Restart System
 
-If a new print begins while the printer is in hot standby, the startup sequence will attempt a **fast restart**.
+If a new print begins while the printer is in hot standby the startup routine will attempt a **fast restart**.
 
-Fast restart is allowed only when all conditions are true:
+Fast restart is allowed only when:
 
 - Heat hold is enabled
 - Standby is marked ready
-- The material is the **same as the previous print**
-- All axes are still **homed**
-- The **sanity probe passes**
+- The material matches the previous print
+- All axes are still homed
+- The TAP sanity probe passes
 
-If all conditions are satisfied, the printer skips the heavy startup sequence.
+If these conditions pass, the printer skips the heavy startup sequence.
 
 ---
 
@@ -97,34 +126,42 @@ Fast restart skips:
 
 The following still occur:
 
-- Bed temperature set and wait
-- Nozzle temperature set and wait
+- Bed temperature set / wait
+- Nozzle temperature set / wait
 - Flow rate configuration
 - Normal print start
+
+This allows extremely fast restarts when printing multiple parts in sequence.
 
 ---
 
 # TAP Sanity Probe
 
-Before allowing fast restart, the printer performs a **single TAP probe** at bed center.
+Before allowing fast restart the printer performs a **single TAP probe** at bed center.
 
 The new probe result is compared to the stored standby probe value.
 
 Tolerance:
 
-```
 ±0.03 mm
-```
 
-If the difference exceeds this threshold, fast restart is **aborted** and a full startup sequence runs instead.
+If the difference exceeds this value, fast restart is **aborted** and a full startup sequence runs instead.
+
+This protects against:
+
+- Gantry drift
+- Manual movement
+- Belt relaxation
+- Stepper disable
+- Physical bumps to the printer
 
 ---
 
 # Standby Safety Timer
 
-Hot standby automatically starts a **60 minute safety timer**.
+Hot standby automatically starts a **60 minute timer**.
 
-If no print begins before the timer expires, the printer performs a safe shutdown.
+If no print begins before the timer expires the printer performs a safe shutdown.
 
 Shutdown sequence:
 
@@ -139,7 +176,7 @@ Shutdown sequence:
 
 # Chamber Air Purge
 
-When the standby timeout expires, the printer performs a short purge cycle.
+When the standby timeout expires the printer runs a short purge cycle.
 
 Fans activated:
 
@@ -148,13 +185,11 @@ Fans activated:
 
 Duration:
 
-```
 180 seconds
-```
 
 After the purge:
 
-- Fans shut off
+- Fans turn off
 - Steppers disable
 
 ---
@@ -180,7 +215,7 @@ Cancel will:
 
 # Probe Reference Storage
 
-When entering hot standby, the printer performs a probe and stores:
+When entering hot standby the printer performs a probe and stores:
 
 ```
 HOT_STANDBY.last_probe_z
@@ -188,38 +223,50 @@ HOT_STANDBY.last_probe_z
 
 This value is used during fast restart sanity checks.
 
-If standby ends due to timeout or cancel, this value is cleared.
+If standby ends due to timeout or cancel this value is cleared.
 
 ---
 
-# Example Workflow
+# Backing Up Configuration
 
-Typical multi-print workflow:
-
-1. Enable heat hold
-2. Start a print
-3. Print finishes and printer enters hot standby
-4. Start next print
-5. Fast restart triggers automatically
-
----
-
-# Repository Structure
+A helper macro is provided to commit and push configuration changes:
 
 ```
-macros/
-  print/
-    print_start.cfg
-    print_end.cfg
-    cancel_print.cfg
-
-  system/
-    heat_hold.cfg
-    hot_standby.cfg
+BACKUP_CFG
 ```
+
+This runs:
+
+```
+services/autocommit.sh
+```
+
+which commits and pushes the configuration to GitHub.
 
 ---
 
-# Credits
+# External Components
 
-This configuration builds on the standard Voron Klipper ecosystem and extends it with a hot standby / fast restart system designed for high-throughput printing workflows.
+This configuration integrates with several external projects:
+
+- Klipper
+- Moonraker
+- Mainsail
+- KlipperScreen
+- Happy Hare ERCF
+
+Those projects retain their respective licenses.
+
+---
+
+# License
+
+This repository is released under the **MIT License**.
+
+See the `LICENSE` file for details.
+
+---
+
+# Author
+
+Jason S.
