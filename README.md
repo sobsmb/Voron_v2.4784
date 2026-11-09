@@ -1,7 +1,7 @@
 
 # Voron V2.4 Configuration (4784)
 
-Configuration repository for my **Voron V2.4** running **Klipper**, with **Happy Hare ERCF MMU**.
+Configuration repository for my **Voron V2.4 (V2.4784 / Blue)** running **Klipper**, with **Happy Hare v4.2.0** and a **12-gate ERCF v2 MMU**.
 
 This repository stores the printer configuration, macros, and supporting service configuration used on the machine.
 
@@ -13,7 +13,7 @@ This repository stores the printer configuration, macros, and supporting service
 |-----------|-------------|
 | Printer | Voron V2.4 |
 | Firmware | Klipper |
-| MMU | ERCF with Happy Hare |
+| MMU | 12-gate ERCF v2 with Happy Hare v4.2.0, Thumper Blocks, and servo-less Thumper bearing modification |
 | Host | Raspberry Pi running MainsailOS |
 | UI | Mainsail / KlipperScreen |
 | Probe | Voron TAP |
@@ -36,14 +36,88 @@ services/                  Host-side service configuration
 archive/                   Old / unused configs kept for reference
 artifacts/                 Runtime generated files (ignored by git)
 
-mmu/                       Happy Hare ERCF configuration (not modified)
+mmu/                       Customized Happy Hare v4.2 configuration and saved calibration
+blue-v4-cutter.cfg         Blue-specific lift / native cut / Z-return overlay
 ```
 
 ### Important Notes
 
-* The **`mmu/` directory is left untouched** so that Happy Hare updates can be applied safely.
+* The **`mmu/` directory is customized** for Blue's ERCF v2 hardware and patched Happy Hare v4.2 installation. Do not blindly update or regenerate it; preserve the local adaptations described below.
 * Runtime files such as logs and Moonraker databases are excluded via `.gitignore`.
 * The repository is automatically backed up to GitHub using the `BACKUP_CFG` macro.
+
+---
+
+# Happy Hare v4.2 / ERCF v2
+
+Happy Hare **v4.2.0** is pinned to commit
+`1b11270cbc16e9bc7921e8dad0fefdcc9577f074` with local adaptations for Blue.
+The active source checkout is `/home/pi/Happy-Hare-v4.2-staging/`; despite its
+name, it is the installed runtime source, not an unused preview. Its local
+changes are not all committed upstream.
+
+## Hardware and local adaptations
+
+- **ERCF v2, 12 gates, Thumper Blocks**, with the
+  [servo-less Thumper bearing modification](https://www.printables.com/model/1555814-ercf-v2-thumper-block-bearing-mod).
+  This remains an ERCF v2 configuration, not Jack Rabbit / ERCF v3.
+- The local `MOD_THUMPER_BEARING_SELECTOR` option uses `LinearSelector` with
+  `filament_always_gripped=1`; no selector servo is generated. The gantry cutter
+  and Blobifier tray retain their separate accessory servos.
+- M220 speed-override handling is retained in the Moonraker preprocessing code.
+- Encoder free-spin detection during final unload parking retains one bounded
+  local recovery retry rather than silently declaring a successful unload.
+- `blue-v4-cutter.cfg` wraps the native v4 cutter: lift Z by up to **10 mm**
+  within available travel, perform the native cut, then return to the pre-cut Z.
+  It adds no custom XY parking; the native cutter still performs its required
+  XY approach and cut moves.
+- Blue's existing custom PAUSE / CANCEL_PRINT macro precedence is preserved.
+
+Review and preserve these configuration and source changes before updating
+Happy Hare or regenerating its configuration. A stock upstream checkout is not
+a drop-in replacement for this locally patched installation.
+
+## Supervised validation and calibration
+
+Post-upgrade checks completed successfully:
+
+- Selector direction, home-switch press/release, and MMU homing.
+- Selection, filament feeding, and parking at all **12 gates**.
+- Physical 100 mm gear-travel checks on gates 0 and 1, followed by encoder-based
+  gear calibration of gates 2-11 using the corrected reference.
+- Fresh encoder and sensor-based Bowden calibration with the output tube connected.
+- Blobifier tray extension/retraction, gantry-pin operation, and cold cutter actuation.
+- Full XYZ homing, QGL, and Z re-homing; separate Z lift/return verification.
+- Heated gate 0 load, Blobifier purge and brush cleaning, cutter lift/cut/Z-return,
+  and unload/parking with motor-current restoration verified.
+
+Saved runtime calibration is in `mmu/mmu_vars.cfg`. Bowden length and encoder
+clog-detection values can change through calibration and autotuning; use the live
+saved values rather than treating a historical measurement as fixed. Saving a
+gate gear correction can also automatically rescale the shared Bowden length;
+remeasure it after completing a set of gear calibrations.
+
+The encoder's exposed filament-switch entity indicates **recent encoder motion**,
+not static filament presence. Its idle state alone does not prove that filament
+has cleared the selector; use the completed parking routine and appropriate checks.
+
+## Backup and rollback
+
+The original v3 source and pre-upgrade rollback copies are preserved separately.
+A private post-validation archive also preserves the complete printer configuration,
+patched v4.2 checkout (including local/untracked files), saved calibration, installed
+Happy Hare module links, original v3 source, and existing v3 rollback files. Its
+SHA-256 was verified on Blue and on an off-printer copy.
+
+GitHub configuration backups are **not** a complete replacement for that private
+archive: the active Happy Hare source lives outside this repository. Do not publish
+private archives, credentials, or source/configuration snapshots without reviewing
+their contents. This backup is not a full system-disk image.
+
+Restoration requires stopping Klipper and Moonraker, restoring matching configuration
+and source/link targets, and verifying them before a supervised restart. Accessory
+servos may move during startup. Do not blindly mix v3 and v4 files or use upstream
+uninstall as a rollback procedure.
 
 ---
 
